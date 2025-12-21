@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CooldownReady (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "CooldownReady (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
