@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
@@ -48,43 +49,161 @@ namespace CooldownReady
 
         public MainWindow()
         {
-            InitializeComponent();
-            
-            // 윈도우 크기 설정 및 아이콘 설정 - Activated 이벤트에서 처리
-            this.Activated += MainWindow_Activated;
-            
-            // DispatcherQueue 설정 (Window의 DispatcherQueue 사용)
-            var dispatcherQueue = this.DispatcherQueue;
-            
-            // 키보드 훅 초기화
-            _keyboardHook = new GlobalKeyboardHook();
-            _keyboardHook.SetDispatcherQueue(dispatcherQueue);
-            _keyboardHook.KeyPressed += OnKeyPressed;
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("MainWindow 생성자 시작");
+                InitializeComponent();
+                System.Diagnostics.Debug.WriteLine("InitializeComponent 완료");
+                
+                // 윈도우 크기 설정 및 아이콘 설정 - Activated 이벤트에서 처리
+                this.Activated += MainWindow_Activated;
+                
+                // DispatcherQueue 설정 (Window의 DispatcherQueue 사용)
+                var dispatcherQueue = this.DispatcherQueue;
+                System.Diagnostics.Debug.WriteLine("DispatcherQueue 가져오기 완료");
+                
+                // 키보드 훅 초기화
+                try
+                {
+                    _keyboardHook = new GlobalKeyboardHook();
+                    _keyboardHook.SetDispatcherQueue(dispatcherQueue);
+                    _keyboardHook.KeyPressed += OnKeyPressed;
+                    System.Diagnostics.Debug.WriteLine("GlobalKeyboardHook 초기화 완료");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GlobalKeyboardHook 초기화 오류: {ex.Message}");
+                    // 키보드 훅은 선택적이므로 계속 진행
+                }
 
-            // 타이머 초기화
-            _countdownTimer = new DispatcherTimer();
-            _countdownTimer.Interval = TimeSpan.FromSeconds(1);
-            _countdownTimer.Tick += CountdownTimer_Tick;
+                // 타이머 초기화
+                _countdownTimer = new DispatcherTimer();
+                _countdownTimer.Interval = TimeSpan.FromSeconds(1);
+                _countdownTimer.Tick += CountdownTimer_Tick;
+                System.Diagnostics.Debug.WriteLine("DispatcherTimer 초기화 완료");
 
-            // 사운드 재생을 위한 MediaPlayer 초기화
-            _mediaPlayer = new MediaPlayer();
-            _mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Alerts;
+                // 사운드 재생을 위한 MediaPlayer 초기화
+                _mediaPlayer = new MediaPlayer();
+                _mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Alerts;
+                System.Diagnostics.Debug.WriteLine("MediaPlayer 초기화 완료");
 
-            // 사운드 파일 목록 로드
-            _ = LoadSoundFilesAsync();
+                // 사운드 파일 목록 로드
+                _ = LoadSoundFilesAsync();
 
-            // 설정값 로드
-            _ = LoadSettingsAsync();
+                // 설정값 로드
+                _ = LoadSettingsAsync();
 
-            // 초기 카운트다운 표시 (00:00)
-            _remainingTime = TimeSpan.Zero;
-            UpdateCountdownDisplay();
+                // 초기 카운트다운 표시 (00:00)
+                _remainingTime = TimeSpan.Zero;
+                UpdateCountdownDisplay();
 
-            // 윈도우 닫힘 이벤트 처리
-            this.Closed += MainWindow_Closed;
-            
-            // 타이틀 바 아이콘 설정 (초기화 직후)
-            _ = SetWindowIconAsync();
+                // 윈도우 닫힘 이벤트 처리
+                this.Closed += MainWindow_Closed;
+                
+                // 타이틀 바 아이콘 설정 (초기화 직후)
+                _ = SetWindowIconAsync();
+                
+                System.Diagnostics.Debug.WriteLine("MainWindow 생성자 완료");
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = $"MainWindow Constructor Exception: {ex.Message}\nStack Trace: {ex.StackTrace}";
+                System.Diagnostics.Debug.WriteLine(errorMsg);
+                
+                // 파일로도 로그 남기기
+                try
+                {
+                    var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CooldownReady", "error.log");
+                    var logDir = System.IO.Path.GetDirectoryName(logPath);
+                    if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+                    {
+                        Directory.CreateDirectory(logDir);
+                    }
+                    File.AppendAllText(logPath, $"[{DateTime.Now}] {errorMsg}\n\n");
+                }
+                catch { }
+                
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Assets 폴더의 파일 경로를 가져옵니다. 패키징된 앱과 직접 실행 파일 모두 지원합니다.
+        /// </summary>
+        private string GetAssetsPath(string relativePath)
+        {
+            try
+            {
+                // 패키징된 앱인지 확인
+                var packageLocation = Windows.ApplicationModel.Package.Current.InstalledLocation;
+                if (packageLocation != null)
+                {
+                    var packagePath = Path.Combine(packageLocation.Path, relativePath);
+                    if (File.Exists(packagePath) || Directory.Exists(packagePath))
+                    {
+                        return packagePath;
+                    }
+                }
+            }
+            catch
+            {
+                // 패키징되지 않은 앱인 경우
+            }
+
+            // 직접 실행 파일의 경우
+            var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+            var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+            if (string.IsNullOrEmpty(assemblyDirectory))
+            {
+                // 단일 파일로 빌드된 경우
+                assemblyDirectory = AppContext.BaseDirectory;
+            }
+            return Path.Combine(assemblyDirectory, relativePath);
+        }
+
+        /// <summary>
+        /// Assets 폴더의 StorageFolder를 가져옵니다. 패키징된 앱과 직접 실행 파일 모두 지원합니다.
+        /// </summary>
+        private async Task<StorageFolder?> GetAssetsFolderAsync(string relativePath)
+        {
+            try
+            {
+                // 패키징된 앱인지 확인
+                var packageLocation = Windows.ApplicationModel.Package.Current.InstalledLocation;
+                if (packageLocation != null)
+                {
+                    try
+                    {
+                        var folderPath = Path.Combine(packageLocation.Path, relativePath);
+                        var folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
+                        return folder;
+                    }
+                    catch
+                    {
+                        // 폴더를 찾을 수 없는 경우
+                    }
+                }
+            }
+            catch
+            {
+                // 패키징되지 않은 앱인 경우
+            }
+
+            // 직접 실행 파일의 경우
+            var assetsPath = GetAssetsPath(relativePath);
+            if (Directory.Exists(assetsPath))
+            {
+                try
+                {
+                    return await StorageFolder.GetFolderFromPathAsync(assetsPath);
+                }
+                catch
+                {
+                    // 폴더를 열 수 없는 경우
+                }
+            }
+
+            return null;
         }
 
         private async Task SetWindowIconAsync()
@@ -97,17 +216,31 @@ namespace CooldownReady
                 _appWindow = AppWindow.GetFromWindowId(windowId);
                 if (_appWindow != null)
                 {
-                    var iconUri = new Uri("ms-appx:///Assets/cooldown.ico");
-                    var iconFile = await StorageFile.GetFileFromApplicationUriAsync(iconUri);
-                    if (iconFile != null && !string.IsNullOrEmpty(iconFile.Path))
+                    string iconPath = GetAssetsPath("Assets\\cooldown.ico");
+                    if (File.Exists(iconPath))
                     {
-                        System.Diagnostics.Debug.WriteLine($"아이콘 파일 경로: {iconFile.Path}");
-                        _appWindow.SetIcon(iconFile.Path);
+                        System.Diagnostics.Debug.WriteLine($"아이콘 파일 경로: {iconPath}");
+                        _appWindow.SetIcon(iconPath);
                         System.Diagnostics.Debug.WriteLine("아이콘 설정 완료");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("아이콘 파일을 찾을 수 없습니다.");
+                        // ms-appx URI 시도 (패키징된 앱의 경우)
+                        try
+                        {
+                            var iconUri = new Uri("ms-appx:///Assets/cooldown.ico");
+                            var iconFile = await StorageFile.GetFileFromApplicationUriAsync(iconUri);
+                            if (iconFile != null && !string.IsNullOrEmpty(iconFile.Path))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"아이콘 파일 경로 (ms-appx): {iconFile.Path}");
+                                _appWindow.SetIcon(iconFile.Path);
+                                System.Diagnostics.Debug.WriteLine("아이콘 설정 완료");
+                            }
+                        }
+                        catch (Exception ex2)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"아이콘 파일을 찾을 수 없습니다. 경로: {iconPath}, 오류: {ex2.Message}");
+                        }
                     }
                 }
             }
@@ -407,9 +540,17 @@ namespace CooldownReady
 
         private async Task LoadSoundFilesAsync()
         {
+            _isLoadingSounds = true;
             try
             {
-                var soundsFolder = await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFolderAsync("Assets\\sounds");
+                var soundsFolder = await GetAssetsFolderAsync("Assets\\sounds");
+                if (soundsFolder == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("sounds 폴더를 찾을 수 없습니다.");
+                    _isLoadingSounds = false;
+                    return;
+                }
+
                 var files = await soundsFolder.GetFilesAsync();
                 
                 // mp3 파일만 필터링하고 정렬
@@ -426,8 +567,6 @@ namespace CooldownReady
                     string nameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(fileName);
                     // 첫 글자를 대문자로 변환
                     string displayName = char.ToUpper(nameWithoutExtension[0]) + nameWithoutExtension.Substring(1);
-                    // Tag는 첫 글자가 대문자인 전체 파일명
-                    string tagName = char.ToUpper(fileName[0]) + fileName.Substring(1);
                     
                     var item = new ComboBoxItem
                     {
@@ -440,20 +579,21 @@ namespace CooldownReady
                 // 기본 선택 설정 (첫 번째 항목)
                 if (AlertSoundComboBox.Items.Count > 0)
                 {
-                    // 사운드 로드 중이므로 SelectionChanged에서 재생하지 않도록 플래그 설정
-                    _isLoadingSounds = true;
                     AlertSoundComboBox.SelectedIndex = 0;
                     // 기본 선택된 파일명 설정 (실제 파일명 사용)
                     if (AlertSoundComboBox.SelectedItem is ComboBoxItem firstItem && firstItem.Tag is string firstFileName)
                     {
                         _selectedSoundFile = firstFileName;
                     }
-                    _isLoadingSounds = false;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"사운드 파일 로드 오류: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"스택 트레이스: {ex.StackTrace}");
+            }
+            finally
+            {
                 _isLoadingSounds = false;
             }
         }
@@ -477,9 +617,22 @@ namespace CooldownReady
             {
                 if (_mediaPlayer != null)
                 {
-                    // ms-appx:// URI를 사용하여 Assets/sounds 디렉토리의 선택된 사운드 파일 재생
-                    var soundUri = new Uri($"ms-appx:///Assets/sounds/{_selectedSoundFile}");
-                    var source = MediaSource.CreateFromUri(soundUri);
+                    string soundPath = GetAssetsPath($"Assets\\sounds\\{_selectedSoundFile}");
+                    MediaSource source;
+
+                    if (File.Exists(soundPath))
+                    {
+                        // 직접 실행 파일인 경우 파일 경로 사용
+                        var soundFile = await StorageFile.GetFileFromPathAsync(soundPath);
+                        source = MediaSource.CreateFromStorageFile(soundFile);
+                    }
+                    else
+                    {
+                        // 패키징된 앱인 경우 ms-appx URI 사용
+                        var soundUri = new Uri($"ms-appx:///Assets/sounds/{_selectedSoundFile}");
+                        source = MediaSource.CreateFromUri(soundUri);
+                    }
+
                     _mediaPlayer.Source = source;
                     _mediaPlayer.Play();
                 }
@@ -487,6 +640,7 @@ namespace CooldownReady
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"사운드 재생 오류: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"스택 트레이스: {ex.StackTrace}");
             }
         }
 

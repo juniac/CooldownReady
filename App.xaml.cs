@@ -35,6 +35,32 @@ namespace CooldownReady
         public App()
         {
             InitializeComponent();
+            
+            // 전역 예외 핸들러 등록
+            this.UnhandledException += App_UnhandledException;
+        }
+
+        private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            // 예외 정보를 파일로 저장
+            try
+            {
+                var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CooldownReady", "error.log");
+                var logDir = System.IO.Path.GetDirectoryName(logPath);
+                if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+                {
+                    Directory.CreateDirectory(logDir);
+                }
+                File.AppendAllText(logPath, $"[{DateTime.Now}] {e.Exception}\n{e.Exception.StackTrace}\n\n");
+            }
+            catch { }
+            
+            // 디버그 출력
+            System.Diagnostics.Debug.WriteLine($"Unhandled Exception: {e.Exception}");
+            System.Diagnostics.Debug.WriteLine($"Stack Trace: {e.Exception.StackTrace}");
+            
+            // 기본 동작 (앱 종료)
+            e.Handled = false;
         }
 
         /// <summary>
@@ -43,8 +69,17 @@ namespace CooldownReady
         /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new MainWindow();
-            _window.Activate();
+            try
+            {
+                _window = new MainWindow();
+                _window.Activate();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OnLaunched Exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+                throw;
+            }
         }
     }
 }
