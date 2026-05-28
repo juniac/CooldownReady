@@ -10,26 +10,6 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Font Resources -->
-            <x:String x:Key="NanumSquareNeoFontFamily">ms-appx:///Assets/NanumSquareNeo/NanumSquareNeo-Variable.ttf#NanumSquareNeo</x:String>
-            
-            <!-- Default Font Family for entire application -->
-            <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="{StaticResource NanumSquareNeoFontFamily}"/>
-            </Style>
-            <Style TargetType="TextBox">
-                <Setter Property="FontFamily" Value="{StaticResource NanumSquareNeoFontFamily}"/>
-            </Style>
-            <Style TargetType="Button">
-                <Setter Property="FontFamily" Value="{StaticResource NanumSquareNeoFontFamily}"/>
-            </Style>
-            <Style TargetType="ComboBox">
-                <Setter Property="FontFamily" Value="{StaticResource NanumSquareNeoFontFamily}"/>
-            </Style>
-            <Style TargetType="NumberBox">
-                <Setter Property="FontFamily" Value="{StaticResource NanumSquareNeoFontFamily}"/>
-            </Style>
-            
             <!-- Other app resources here -->
         </ResourceDictionary>
     </Application.Resources>
