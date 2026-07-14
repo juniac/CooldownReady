@@ -136,6 +136,11 @@
             SelectionChanged="AlertSoundComboBox_SelectionChanged">
           </ComboBox>
         </StackPanel>
+
+        <!-- 중복 입력 방지 설정 -->
+        <CheckBox x:Name="PreventDuplicateInputCheckBox"
+          Content="카운트다운 중 중복 입력 방지"
+          HorizontalAlignment="Left" />
       </StackPanel>
 
       <!-- 카운트다운 표시 -->

@@ -71,6 +71,7 @@ namespace CooldownReady
                     ["SecondText"] = "초",
                     ["AlertTimeLabel"] = "알림 시간 (초 전에 알림)",
                     ["AlertSoundLabel"] = "알림 소리 선택",
+                    ["PreventDuplicateInputLabel"] = "카운트다운 중 중복 입력 방지",
                     ["RemainingTimeLabel"] = "남은 시간",
                     ["HideSettingsButton"] = "▲ 설정접기",
                     ["ShowSettingsButton"] = "▼ 설정열기",
@@ -97,6 +98,7 @@ namespace CooldownReady
                     ["SecondText"] = "sec",
                     ["AlertTimeLabel"] = "Alert Time (seconds before end)",
                     ["AlertSoundLabel"] = "Alert Sound",
+                    ["PreventDuplicateInputLabel"] = "Prevent duplicate input during countdown",
                     ["RemainingTimeLabel"] = "Remaining Time",
                     ["HideSettingsButton"] = "▲ Hide Settings",
                     ["ShowSettingsButton"] = "▼ Show Settings",
@@ -333,6 +335,53 @@ namespace CooldownReady
             }
         }
 
+        private string GetPreventDuplicateInputSettingsPath()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "CooldownReady",
+                "prevent-duplicate-input.txt");
+        }
+
+        private bool? LoadPreventDuplicateInputSettingFile()
+        {
+            try
+            {
+                string settingsPath = GetPreventDuplicateInputSettingsPath();
+                if (!File.Exists(settingsPath))
+                    return null;
+
+                string value = File.ReadAllText(settingsPath).Trim();
+                return bool.TryParse(value, out bool preventDuplicateInput)
+                    ? preventDuplicateInput
+                    : null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"중복 입력 방지 설정 파일 로드 오류: {ex.Message}");
+                return null;
+            }
+        }
+
+        private void SavePreventDuplicateInputSettingFile()
+        {
+            try
+            {
+                string settingsPath = GetPreventDuplicateInputSettingsPath();
+                string? settingsDirectory = Path.GetDirectoryName(settingsPath);
+                if (!string.IsNullOrEmpty(settingsDirectory) && !Directory.Exists(settingsDirectory))
+                {
+                    Directory.CreateDirectory(settingsDirectory);
+                }
+
+                File.WriteAllText(settingsPath, (PreventDuplicateInputCheckBox.IsChecked ?? false).ToString());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"중복 입력 방지 설정 파일 저장 오류: {ex.Message}");
+            }
+        }
+
         private void ApplyLocalization()
         {
             AutomationProperties.SetName(LanguageComboBox, T("LanguageLabel"));
@@ -348,6 +397,7 @@ namespace CooldownReady
             AlertTimeLabel.Text = T("AlertTimeLabel");
             AlertSecondBox.PlaceholderText = T("SecondText");
             AlertSoundLabel.Text = T("AlertSoundLabel");
+            PreventDuplicateInputCheckBox.Content = T("PreventDuplicateInputLabel");
             RemainingTimeLabel.Text = T("RemainingTimeLabel");
             FoldSettingsButton.Content = _isSettingsFolded ? T("ShowSettingsButton") : T("HideSettingsButton");
             StartStopButton.Content = _isRunning ? T("StopButton") : T("StartButton");
@@ -671,6 +721,9 @@ namespace CooldownReady
         private void OnKeyPressed(int vkCode)
         {
             if (!_isRunning || vkCode != _targetKeyCode)
+                return;
+
+            if (PreventDuplicateInputCheckBox.IsChecked == true && _remainingTime.TotalSeconds > 0)
                 return;
 
             // 키가 눌렸을 때 카운트다운 시작
@@ -1003,6 +1056,7 @@ namespace CooldownReady
                 composite["SelectedSoundFile"] = _selectedSoundFile;
                 composite["SelectedSoundIndex"] = AlertSoundComboBox.SelectedIndex;
                 composite["AlwaysOnTop"] = AlwaysOnTopToggleButton.IsChecked ?? false;
+                composite["PreventDuplicateInput"] = PreventDuplicateInputCheckBox.IsChecked ?? false;
                 composite["SelectedLanguage"] = _selectedLanguage;
 
                 localSettings.Values["CooldownReadySettings"] = composite;
@@ -1013,6 +1067,7 @@ namespace CooldownReady
             }
 
             SaveLanguageSettingFile();
+            SavePreventDuplicateInputSettingFile();
         }
 
         private void SaveLanguageSetting()
@@ -1037,6 +1092,7 @@ namespace CooldownReady
         private async Task LoadSettingsAsync()
         {
             string? persistedLanguage = LoadLanguageSettingFile();
+            bool? persistedPreventDuplicateInput = LoadPreventDuplicateInputSettingFile();
             string selectedLanguage = persistedLanguage == null
                 ? GetDefaultLanguage()
                 : NormalizeLanguage(persistedLanguage);
@@ -1103,6 +1159,10 @@ namespace CooldownReady
                             AlwaysOnTopToggleButton.IsChecked = alwaysOnTop;
                             SetAlwaysOnTop(alwaysOnTop);
                         }
+
+                        if (composite.ContainsKey("PreventDuplicateInput"))
+                            PreventDuplicateInputCheckBox.IsChecked = persistedPreventDuplicateInput
+                                ?? (bool)composite["PreventDuplicateInput"];
                     }
                 }
             }
@@ -1115,6 +1175,11 @@ namespace CooldownReady
                 if (!_languageChangedByUser)
                 {
                     SelectLanguage(selectedLanguage);
+                }
+
+                if (persistedPreventDuplicateInput != null)
+                {
+                    PreventDuplicateInputCheckBox.IsChecked = persistedPreventDuplicateInput.Value;
                 }
 
                 // 설정 로드 완료 후 플래그 해제

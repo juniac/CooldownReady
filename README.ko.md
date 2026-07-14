@@ -16,6 +16,7 @@ CooldownReady는 키보드 특정 키를 누르면 설정 시간에 소리 알�
 - 남은 시간 및 진행 상태 표시
 - 창 항상 위 고정
 - 한국어/영어 전환
+- 카운트다운 중 중복 키 입력 방지 옵션
 
 ### 요구사항
 
@@ -41,6 +42,7 @@ CooldownReady는 키보드 특정 키를 누르면 설정 시간에 소리 알�
 
 설정은 Windows 앱 로컬 설정에 `CooldownReadySettings` 이름으로 저장됩니다.
 언어 설정은 `%LOCALAPPDATA%\CooldownReady\language.txt`에도 저장됩니다.
+중복 입력 방지 설정은 `%LOCALAPPDATA%\CooldownReady\prevent-duplicate-input.txt`에도 저장됩니다.
 언어 설정이 없으면 지원되는 시스템 언어를 사용하고, 지원되지 않으면 영어를 사용합니다.
 
 저장 항목:
@@ -50,6 +52,7 @@ CooldownReady는 키보드 특정 키를 누르면 설정 시간에 소리 알�
 - 알림 시간
 - 선택한 알림음
 - 항상 위 설정
+- 중복 입력 방지 설정
 - 언어
 
 오류 로그는 다음 경로에 기록됩니다.
