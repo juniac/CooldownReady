@@ -10,7 +10,7 @@
   <Identity
     Name="74beb65a-42af-4db9-b228-c1210f2e4c27"
     Publisher="CN=Maboongman"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="74beb65a-42af-4db9-b228-c1210f2e4c27" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

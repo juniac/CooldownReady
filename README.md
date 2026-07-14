@@ -15,6 +15,7 @@ Use it to track cooldowns for repeated actions by sound without continuously wat
 - Use multiple alert sounds
 - Display remaining time and progress
 - Keep the window always on top
+- Switch between Korean and English
 
 ### Requirements
 
@@ -39,6 +40,8 @@ Pressing the same key again restarts the countdown from the beginning. Press `St
 ### Saved Settings
 
 Settings are saved in Windows app local settings under `CooldownReadySettings`.
+The language preference is also saved to `%LOCALAPPDATA%\CooldownReady\language.txt`.
+If no language preference exists, the app uses the system language when supported, then falls back to English.
 
 Saved values:
 
@@ -47,6 +50,7 @@ Saved values:
 - Alert time
 - Selected alert sound
 - Always-on-top setting
+- Language
 
 Error logs are written to:
 

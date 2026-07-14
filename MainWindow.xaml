@@ -30,6 +30,15 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
 
+      <ComboBox x:Name="LanguageComboBox"
+        Grid.Column="0"
+        Width="120"
+        Height="28"
+        FontSize="12"
+        VerticalAlignment="Center"
+        AutomationProperties.Name="언어"
+        SelectionChanged="LanguageComboBox_SelectionChanged" />
+
       <ToggleButton x:Name="AlwaysOnTopToggleButton"
         Checked="AlwaysOnTopToggleButton_Checked"
         Unchecked="AlwaysOnTopToggleButton_Unchecked"
@@ -51,7 +60,7 @@
       <Button x:Name="SaveSettingsButton"
         Content="설정 저장"
         Click="SaveSettingsButton_Click"
-        Width="75"
+        Width="100"
         Height="28"
         FontSize="12"
         CornerRadius="3"
@@ -65,7 +74,7 @@
       <StackPanel x:Name="SettingsSection" Spacing="20" HorizontalAlignment="Stretch">
         <!-- 키보드 훅 설정 -->
         <StackPanel Spacing="10" HorizontalAlignment="Left">
-          <TextBlock Text="모니터링 키" FontSize="16" FontWeight="SemiBold" />
+          <TextBlock x:Name="MonitoringKeyLabel" Text="모니터링 키" FontSize="16" FontWeight="SemiBold" />
           <TextBox x:Name="KeyboardHookTextBox"
             PlaceholderText="여기를 눌러 키를 눌러주세요..."
             KeyDown="KeyboardHookTextBox_KeyDown"
@@ -84,7 +93,7 @@
 
         <!-- IntervalSec 설정 (분, 초) -->
         <StackPanel Spacing="10" HorizontalAlignment="Left">
-          <TextBlock Text="쿨다운 시간" FontSize="16" FontWeight="SemiBold" />
+          <TextBlock x:Name="CooldownTimeLabel" Text="쿨다운 시간" FontSize="16" FontWeight="SemiBold" />
           <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Left">
             <NumberBox x:Name="IntervalMinuteBox"
               Value="0"
@@ -93,7 +102,7 @@
               Width="150"
               PlaceholderText="분"
               SpinButtonPlacementMode="Inline" />
-            <TextBlock Text="분" VerticalAlignment="Center" />
+            <TextBlock x:Name="IntervalMinuteUnitText" Text="분" VerticalAlignment="Center" />
             <NumberBox x:Name="IntervalSecondBox"
               Value="30"
               Minimum="0"
@@ -101,13 +110,13 @@
               Width="150"
               PlaceholderText="초"
               SpinButtonPlacementMode="Inline" />
-            <TextBlock Text="초" VerticalAlignment="Center" />
+            <TextBlock x:Name="IntervalSecondUnitText" Text="초" VerticalAlignment="Center" />
           </StackPanel>
         </StackPanel>
 
         <!-- alertSec 설정 -->
         <StackPanel Spacing="10" HorizontalAlignment="Left">
-          <TextBlock Text="알림 시간 (초 전에 알림)" FontSize="16" FontWeight="SemiBold" />
+          <TextBlock x:Name="AlertTimeLabel" Text="알림 시간 (초 전에 알림)" FontSize="16" FontWeight="SemiBold" />
           <NumberBox x:Name="AlertSecondBox"
             Value="5"
             Minimum="0"
@@ -120,7 +129,7 @@
 
         <!-- Alert Sound 선택 -->
         <StackPanel Spacing="10" HorizontalAlignment="Left">
-          <TextBlock Text="알림 소리 선택" FontSize="16" FontWeight="SemiBold" />
+          <TextBlock x:Name="AlertSoundLabel" Text="알림 소리 선택" FontSize="16" FontWeight="SemiBold" />
           <ComboBox x:Name="AlertSoundComboBox"
             Width="200"
             HorizontalAlignment="Left"
@@ -137,14 +146,15 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <TextBlock Text="남은 시간"
+          <TextBlock x:Name="RemainingTimeLabel"
+            Text="남은 시간"
             FontSize="16"
             FontWeight="SemiBold"
             Grid.Column="0" />
           <Button x:Name="FoldSettingsButton"
             Content="▲ 설정접기"
             Click="FoldSettingsButton_Click"
-            Width="84"
+            Width="120"
             Height="24"
             FontSize="12"
             Padding="0"
