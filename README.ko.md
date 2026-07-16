@@ -9,14 +9,14 @@ CooldownReady는 키보드 특정 키를 누르면 설정 시간에 소리 알�
 
 ### 주요 기능
 
-- 키 입력 시 카운트다운
-- 시간 설정
+- 여러 개의 키를 각각 등록해 키별로 카운트다운
+- 키별 설정: 모니터링 키, 알림음, 쿨다운 시간, 알림 시간, 재누름 방지
+- `＋ 키 추가` 버튼으로 행 추가 (행이 늘면 창이 커지고, 일정 크기 이상이면 스크롤)
 - 타이머 종료 전 알림 시점 설정
 - 여러 개의 알림음
-- 남은 시간 및 진행 상태 표시
+- 키별 남은 시간 및 진행 상태 표시
 - 창 항상 위 고정
 - 한국어/영어 전환
-- 카운트다운 중 중복 키 입력 방지 옵션
 
 ### 요구사항
 
@@ -25,34 +25,27 @@ CooldownReady는 키보드 특정 키를 누르면 설정 시간에 소리 알�
 ### 사용 방법
 
 1. CooldownReady를 실행합니다.
-2. `모니터링 키` 입력 칸을 선택합니다.
-3. 모니터링할 키를 누릅니다.
-4. `쿨다운 시간`을 설정합니다.
-5. `알림 시간`을 설정합니다.
+2. 키 행의 키 입력 칸을 선택하고 모니터링할 키를 누릅니다.
+3. 행에서 알림음, 쿨다운 시간(분/초), 알림 시간(초)을 설정합니다.
    - 예: 쿨다운 `30`초, 알림 시간 `5`초입니다.
    - 남은 시간이 `5`초가 되면 알림음이 재생됩니다.
-6. `알림 소리 선택`에서 사용할 소리를 고릅니다.
-7. `설정 저장`을 누릅니다.
-8. `모니터링 시작`을 누릅니다.
-9. 설정한 키를 눌러 카운트다운을 시작합니다.
+4. 필요하면 `＋ 키 추가`를 눌러 키 행을 더 추가합니다.
+5. `설정 저장`을 누릅니다.
+6. `시작`을 누릅니다.
+7. 설정한 키를 눌러 해당 키의 카운트다운을 시작합니다.
 
-같은 키를 다시 누르면 카운트다운이 처음부터 다시 시작됩니다. `중지`를 누르면 모니터링과 타이머가 정지됩니다.
+같은 키를 다시 누르면 그 키의 카운트다운이 처음부터 다시 시작됩니다(행별 `재누름 방지` 옵션으로 막을 수 있습니다). `중지`를 누르면 모니터링과 모든 타이머가 정지됩니다.
 
 ### 설정 저장
 
-설정은 Windows 앱 로컬 설정에 `CooldownReadySettings` 이름으로 저장됩니다.
-언어 설정은 `%LOCALAPPDATA%\CooldownReady\language.txt`에도 저장됩니다.
-중복 입력 방지 설정은 `%LOCALAPPDATA%\CooldownReady\prevent-duplicate-input.txt`에도 저장됩니다.
+모든 설정은 `%LOCALAPPDATA%\CooldownReady\settings.json` 한 곳에 저장됩니다.
+이전 버전의 설정(Windows 앱 로컬 설정의 `CooldownReadySettings`, `language.txt`, `prevent-duplicate-input.txt`)이 있으면 최초 실행 시 자동으로 옮겨온 뒤 정리합니다.
 언어 설정이 없으면 지원되는 시스템 언어를 사용하고, 지원되지 않으면 영어를 사용합니다.
 
 저장 항목:
 
-- 모니터링 키
-- 쿨다운 시간
-- 알림 시간
-- 선택한 알림음
+- 키 바인딩 목록 (키별: 모니터링 키, 쿨다운 시간, 알림 시간, 알림음, 재누름 방지)
 - 항상 위 설정
-- 중복 입력 방지 설정
 - 언어
 
 오류 로그는 다음 경로에 기록됩니다.
@@ -105,11 +98,14 @@ dotnet publish .\CooldownReady.csproj -c Release -p:Platform=x64 -r win-x64
 ```text
 CooldownReady.csproj        프로젝트 설정
 CooldownReady.slnx          솔루션 파일
-App.xaml                    앱 리소스
+App.xaml                    앱 리소스 및 공용 스타일
 App.xaml.cs                 앱 시작 및 전역 예외 처리
 MainWindow.xaml             메인 화면 UI
-MainWindow.xaml.cs          타이머, 설정, 사운드, 창 제어 로직
+MainWindow.xaml.cs          키보드 훅·타이머·서비스 조율
 GlobalKeyboardHook.cs       전역 키보드 훅
+Controls\                   재사용 UI 컴포넌트 (SettingGroup, CountdownDisplay)
+Services\                   설정 저장, 로컬라이제이션, 사운드, 에셋 경로, 로깅
+Strings\                    언어 리소스 (ko-KR, en-US Resources.resw)
 Assets\                     아이콘, 이미지, 사운드
 Package.appxmanifest        MSIX 패키지 매니페스트
 ```

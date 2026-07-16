@@ -9,14 +9,14 @@ Use it to track cooldowns for repeated actions by sound without continuously wat
 
 ### Main Features
 
-- Start a countdown on key input
-- Configure timer duration
+- Register multiple keys, each with its own countdown
+- Per-key settings: monitoring key, alert sound, cooldown time, alert time, repeat-press prevention
+- Add key rows with the `＋ Add Key` button (the window grows per row and scrolls past a certain size)
 - Configure the alert timing before the timer ends
 - Use multiple alert sounds
-- Display remaining time and progress
+- Display remaining time and progress per key
 - Keep the window always on top
 - Switch between Korean and English
-- Optionally ignore repeated key input while a countdown is running
 
 ### Requirements
 
@@ -25,34 +25,27 @@ Use it to track cooldowns for repeated actions by sound without continuously wat
 ### Usage
 
 1. Run CooldownReady.
-2. Select the `Monitoring Key` input.
-3. Press the key to monitor.
-4. Set the `Cooldown Time`.
-5. Set the `Alert Time`.
+2. Select the key input box in a key row and press the key to monitor.
+3. Configure the row: alert sound, cooldown time (min/sec), and alert time (sec).
    - Example: cooldown `30` seconds, alert time `5` seconds.
    - The alert sound plays when the remaining time reaches `5` seconds.
-6. Select a sound from `Alert Sound`.
-7. Press `Save Settings`.
-8. Press `Start Monitoring`.
-9. Press the configured key to start the countdown.
+4. Press `＋ Add Key` to add more key rows if needed.
+5. Press `Save Settings`.
+6. Press `Start`.
+7. Press a configured key to start that key's countdown.
 
-Pressing the same key again restarts the countdown from the beginning. Press `Stop` to stop monitoring and the timer.
+Pressing the same key again restarts that key's countdown from the beginning (each row's repeat-press prevention option can block this). Press `Stop` to stop monitoring and all timers.
 
 ### Saved Settings
 
-Settings are saved in Windows app local settings under `CooldownReadySettings`.
-The language preference is also saved to `%LOCALAPPDATA%\CooldownReady\language.txt`.
-The duplicate input prevention preference is also saved to `%LOCALAPPDATA%\CooldownReady\prevent-duplicate-input.txt`.
+All settings are saved in a single file: `%LOCALAPPDATA%\CooldownReady\settings.json`.
+Settings from previous versions (`CooldownReadySettings` in Windows app local settings, `language.txt`, and `prevent-duplicate-input.txt`) are migrated automatically on first launch and then cleaned up.
 If no language preference exists, the app uses the system language when supported, then falls back to English.
 
 Saved values:
 
-- Monitoring key
-- Cooldown time
-- Alert time
-- Selected alert sound
+- Key binding list (per key: monitoring key, cooldown time, alert time, alert sound, repeat-press prevention)
 - Always-on-top setting
-- Duplicate input prevention setting
 - Language
 
 Error logs are written to:
@@ -105,11 +98,14 @@ dotnet publish .\CooldownReady.csproj -c Release -p:Platform=x64 -r win-x64
 ```text
 CooldownReady.csproj        Project configuration
 CooldownReady.slnx          Solution file
-App.xaml                    App resources
+App.xaml                    App resources and shared styles
 App.xaml.cs                 App startup and global exception handling
 MainWindow.xaml             Main window UI
-MainWindow.xaml.cs          Timer, settings, sound, and window logic
+MainWindow.xaml.cs          Orchestrates keyboard hook, timer, and services
 GlobalKeyboardHook.cs       Global keyboard hook
+Controls\                   Reusable UI components (SettingGroup, CountdownDisplay)
+Services\                   Settings persistence, localization, sound, asset paths, logging
+Strings\                    Language resources (ko-KR, en-US Resources.resw)
 Assets\                     Icons, images, and sounds
 Package.appxmanifest        MSIX package manifest
 ```

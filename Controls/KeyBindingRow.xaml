@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+  x:Class="CooldownReady.Controls.KeyBindingRow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d">
+
+  <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+    BorderThickness="1"
+    CornerRadius="5"
+    Padding="10">
+    <StackPanel Spacing="8">
+      <!-- 1줄: 키 입력 / 알림음 / 삭제 -->
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBox x:Name="KeyBox"
+          Grid.Column="0"
+          Width="130"
+          IsReadOnly="True"
+          MaxLength="50"
+          FontSize="16"
+          FontWeight="Bold"
+          KeyDown="KeyBox_KeyDown" />
+
+        <ComboBox x:Name="SoundComboBox"
+          Grid.Column="1"
+          Width="150"
+          Margin="10,0,0,0"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center"
+          SelectionChanged="SoundComboBox_SelectionChanged" />
+
+        <Button x:Name="RemoveButton"
+          Grid.Column="2"
+          Width="32"
+          Height="32"
+          Padding="0"
+          Click="RemoveButton_Click">
+          <SymbolIcon Symbol="Delete">
+            <SymbolIcon.RenderTransform>
+              <ScaleTransform ScaleX="0.75" ScaleY="0.75" CenterX="16" CenterY="16" />
+            </SymbolIcon.RenderTransform>
+          </SymbolIcon>
+        </Button>
+      </Grid>
+
+      <!-- 2줄: 쿨다운 시간(분/초) + 알림 시간 -->
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <NumberBox x:Name="MinuteBox"
+          Width="80"
+          Minimum="0"
+          Maximum="59"
+          SpinButtonPlacementMode="Compact"
+          ValueChanged="MinuteBox_ValueChanged" />
+        <TextBlock x:Name="MinuteUnitText" VerticalAlignment="Center" />
+        <NumberBox x:Name="SecondBox"
+          Width="80"
+          Minimum="0"
+          Maximum="59"
+          SpinButtonPlacementMode="Compact"
+          ValueChanged="SecondBox_ValueChanged" />
+        <TextBlock x:Name="SecondUnitText" VerticalAlignment="Center" />
+        <NumberBox x:Name="AlertBox"
+          Width="80"
+          Margin="10,0,0,0"
+          Minimum="0"
+          Maximum="300"
+          SpinButtonPlacementMode="Compact"
+          ValueChanged="AlertBox_ValueChanged" />
+        <TextBlock x:Name="AlertUnitText" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <!-- 3줄: 재누름 방지 -->
+      <CheckBox x:Name="PreventCheckBox"
+        Checked="PreventCheckBox_Toggled"
+        Unchecked="PreventCheckBox_Toggled" />
+    </StackPanel>
+  </Border>
+</UserControl>

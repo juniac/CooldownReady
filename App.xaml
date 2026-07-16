@@ -3,14 +3,33 @@
     x:Class="CooldownReady.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:CooldownReady">
+    xmlns:local="using:CooldownReady"
+    xmlns:controls="using:CooldownReady.Controls">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+
+            <!-- 설정 섹션 공통 레이아웃: 제목 + 입력 영역 -->
+            <Style TargetType="controls:SettingGroup">
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="controls:SettingGroup">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{TemplateBinding Header}"
+                                    FontSize="16"
+                                    FontWeight="SemiBold" />
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                            </StackPanel>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

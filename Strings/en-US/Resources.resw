@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SaveSettingsButton" xml:space="preserve">
+    <value>Save Settings</value>
+  </data>
+  <data name="AlwaysOnTopToolTip" xml:space="preserve">
+    <value>Always on top</value>
+  </data>
+  <data name="MonitoringKeyLabel" xml:space="preserve">
+    <value>Monitoring Key</value>
+  </data>
+  <data name="KeyPlaceholder" xml:space="preserve">
+    <value>Click here and press a key...</value>
+  </data>
+  <data name="NoKeySet" xml:space="preserve">
+    <value>No key has been set</value>
+  </data>
+  <data name="SelectedKeyDisplay" xml:space="preserve">
+    <value>Selected key: {0} (Virtual Key: {1})</value>
+  </data>
+  <data name="CooldownTimeLabel" xml:space="preserve">
+    <value>Cooldown Time</value>
+  </data>
+  <data name="MinuteText" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="SecondText" xml:space="preserve">
+    <value>sec</value>
+  </data>
+  <data name="AlertTimeLabel" xml:space="preserve">
+    <value>Alert Time (seconds before end)</value>
+  </data>
+  <data name="AlertSoundLabel" xml:space="preserve">
+    <value>Alert Sound</value>
+  </data>
+  <data name="PreventDuplicateInputLabel" xml:space="preserve">
+    <value>Prevent duplicate input during countdown</value>
+  </data>
+  <data name="RemainingTimeLabel" xml:space="preserve">
+    <value>Remaining Time</value>
+  </data>
+  <data name="HideSettingsButton" xml:space="preserve">
+    <value>▲ Hide Settings</value>
+  </data>
+  <data name="ShowSettingsButton" xml:space="preserve">
+    <value>▼ Show Settings</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="StopButton" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="DialogErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="DialogNoticeTitle" xml:space="preserve">
+    <value>Notice</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="MissingKeyMessage" xml:space="preserve">
+    <value>Set a monitoring key first.</value>
+  </data>
+  <data name="MissingCooldownMessage" xml:space="preserve">
+    <value>Set a cooldown time.</value>
+  </data>
+  <data name="SettingsSavedMessage" xml:space="preserve">
+    <value>Settings saved.</value>
+  </data>
+  <data name="AddKeyButton" xml:space="preserve">
+    <value>＋ Add Key</value>
+  </data>
+  <data name="RemoveKeyToolTip" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="KeyPlaceholderShort" xml:space="preserve">
+    <value>Press a key</value>
+  </data>
+  <data name="AlertShortLabel" xml:space="preserve">
+    <value>alert (s)</value>
+  </data>
+</root>
