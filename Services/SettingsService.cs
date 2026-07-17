@@ -42,6 +42,7 @@ namespace CooldownReady.Services
                                 Save(settings);
                             }
                         }
+                        FoldMinutesIntoSeconds(settings);
                         return settings;
                     }
                 }
@@ -54,12 +55,28 @@ namespace CooldownReady.Services
             var migrated = MigrateLegacySettings();
             if (migrated != null)
             {
+                FoldMinutesIntoSeconds(migrated);
                 Save(migrated);
                 CleanupLegacySettings();
                 return migrated;
             }
 
             return new AppSettings();
+        }
+
+        /// <summary>
+        /// 구버전의 분 단위 쿨다운 입력을 초 단위로 합산합니다.
+        /// </summary>
+        private static void FoldMinutesIntoSeconds(AppSettings settings)
+        {
+            foreach (var binding in settings.Bindings)
+            {
+                if (binding.IntervalMinute > 0)
+                {
+                    binding.IntervalSecond += binding.IntervalMinute * 60;
+                    binding.IntervalMinute = 0;
+                }
+            }
         }
 
         public static void Save(AppSettings settings)

@@ -49,7 +49,7 @@
     <value>Alert Sound</value>
   </data>
   <data name="PreventDuplicateInputLabel" xml:space="preserve">
-    <value>Prevent duplicate input during countdown</value>
+    <value>Prevent re-press</value>
   </data>
   <data name="RemainingTimeLabel" xml:space="preserve">
     <value>Remaining Time</value>
@@ -95,5 +95,11 @@
   </data>
   <data name="AlertShortLabel" xml:space="preserve">
     <value>alert (s)</value>
+  </data>
+  <data name="EnabledToolTip" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="ShowMillisecondsLabel" xml:space="preserve">
+    <value>Show ms</value>
   </data>
 </root>

@@ -7,39 +7,52 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d">
 
-  <StackPanel HorizontalAlignment="Stretch" Spacing="4">
-    <Grid>
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-      </Grid.ColumnDefinitions>
-      <TextBlock x:Name="KeyNameText"
-        Grid.Column="0"
-        Text="—"
-        FontSize="18"
-        FontWeight="SemiBold"
-        VerticalAlignment="Center" />
-      <TextBlock x:Name="CountdownText"
-        Grid.Column="1"
-        Text="00:00"
-        FontSize="36"
-        FontWeight="Bold"
-        VerticalAlignment="Center" />
-    </Grid>
-    <Border x:Name="ProgressBarContainer"
-      Height="20"
+  <!-- [키 라벨 = 진행바 배경][남은 초(최대 999)] -->
+  <Grid ColumnSpacing="8">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+
+    <Border x:Name="BarContainer"
+      Grid.Column="0"
+      Height="36"
       HorizontalAlignment="Stretch"
       VerticalAlignment="Center"
-      Visibility="Collapsed"
       Background="#33000000"
       CornerRadius="5"
-      SizeChanged="ProgressBarContainer_SizeChanged">
-      <Rectangle x:Name="ProgressBar"
-        HorizontalAlignment="Left"
-        VerticalAlignment="Stretch"
-        Fill="White"
-        RadiusX="5"
-        RadiusY="5" />
+      SizeChanged="BarContainer_SizeChanged">
+      <Grid>
+        <Rectangle x:Name="ProgressBar"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Stretch"
+          Fill="{ThemeResource TextFillColorPrimaryBrush}"
+          Opacity="0.35"
+          RadiusX="5"
+          RadiusY="5" />
+        <Rectangle x:Name="AlertMarker"
+          Width="2"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Stretch"
+          Fill="{ThemeResource TextFillColorPrimaryBrush}"
+          Opacity="0.7"
+          Visibility="Collapsed" />
+        <TextBlock x:Name="KeyNameText"
+          Text="—"
+          Margin="10,0"
+          FontSize="16"
+          FontWeight="SemiBold"
+          VerticalAlignment="Center" />
+      </Grid>
     </Border>
-  </StackPanel>
+
+    <TextBlock x:Name="SecondsText"
+      Grid.Column="1"
+      Text="0"
+      MinWidth="58"
+      TextAlignment="Right"
+      FontSize="28"
+      FontWeight="Bold"
+      VerticalAlignment="Center" />
+  </Grid>
 </UserControl>

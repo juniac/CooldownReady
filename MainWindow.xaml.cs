@@ -9,6 +9,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
 
@@ -21,7 +22,7 @@ namespace CooldownReady
     {
         private const int WindowWidth = 450;
         private const int SettingRowHeight = 150;
-        private const int CountdownRowHeight = 90;
+        private const int CountdownRowHeight = 55;
         private const int MinExpandedHeight = 620;
         private const int MaxExpandedHeight = 900;
         private const int MinFoldedHeight = 320;
@@ -41,6 +42,7 @@ namespace CooldownReady
         private AppWindow? _appWindow;
         private bool _isSettingsFolded = false;
         private bool _isApplyingLanguageSelection = false;
+        private bool _renderTickerHooked = false;
 
         public MainWindow()
         {
@@ -98,6 +100,15 @@ namespace CooldownReady
         private void AddKeyButton_Click(object sender, RoutedEventArgs e)
         {
             var binding = new KeyBindingSettings();
+
+            // 시간 설정은 마지막 행의 입력값을 그대로 이어받는다
+            var lastBinding = _settings.Bindings.LastOrDefault();
+            if (lastBinding != null)
+            {
+                binding.IntervalSecond = lastBinding.IntervalSecond;
+                binding.AlertSecond = lastBinding.AlertSecond;
+            }
+
             _settings.Bindings.Add(binding);
             var row = AddRow(binding);
             row.ApplyLocalization(_localization);
@@ -110,6 +121,9 @@ namespace CooldownReady
             var row = new KeyBindingRow(binding);
             row.RemoveRequested += OnRowRemoveRequested;
             row.KeyChanged += r => UpdateCountdownKeyName(r.Binding);
+            row.EnabledChanged += OnRowEnabledChanged;
+            row.ShowMillisecondsChanged += OnRowShowMillisecondsChanged;
+            row.TimingChanged += OnRowTimingChanged;
             row.SoundPreviewRequested += fileName => _ = _soundService.PlayAsync(fileName);
 
             _rows.Add(row);
@@ -117,7 +131,10 @@ namespace CooldownReady
 
             var display = new CountdownDisplay();
             display.SetKeyName(binding.KeyName);
+            display.ShowMilliseconds = binding.ShowMilliseconds;
             display.Reset();
+            display.SetAlertConfig(binding.IntervalSecond, binding.AlertSecond);
+            display.Opacity = binding.Enabled ? 1.0 : 0.4;
             _displays[binding] = display;
             CountdownListPanel.Children.Add(display);
 
@@ -132,7 +149,7 @@ namespace CooldownReady
 
             if (_runtimes.Remove(row.Binding, out var runtime))
             {
-                runtime.Dispose();
+                runtime.Stop();
             }
             if (_displays.Remove(row.Binding, out var display))
             {
@@ -147,6 +164,38 @@ namespace CooldownReady
             if (_displays.TryGetValue(binding, out var display))
             {
                 display.SetKeyName(binding.KeyName);
+            }
+        }
+
+        private void OnRowEnabledChanged(KeyBindingRow row)
+        {
+            var binding = row.Binding;
+
+            if (_displays.TryGetValue(binding, out var display))
+            {
+                display.Opacity = binding.Enabled ? 1.0 : 0.4;
+            }
+
+            // 모니터링 중 비활성화되면 해당 키의 카운트다운을 멈춘다
+            if (!binding.Enabled && _runtimes.TryGetValue(binding, out var runtime))
+            {
+                runtime.Stop();
+            }
+        }
+
+        private void OnRowShowMillisecondsChanged(KeyBindingRow row)
+        {
+            if (_displays.TryGetValue(row.Binding, out var display))
+            {
+                display.ShowMilliseconds = row.Binding.ShowMilliseconds;
+            }
+        }
+
+        private void OnRowTimingChanged(KeyBindingRow row)
+        {
+            if (_displays.TryGetValue(row.Binding, out var display))
+            {
+                display.SetAlertConfig(row.Binding.IntervalSecond, row.Binding.AlertSecond);
             }
         }
 
@@ -210,6 +259,15 @@ namespace CooldownReady
 
         #endregion
 
+        /// <summary>
+        /// 빈 영역을 클릭하면 입력 상자의 포커스를 해제한다.
+        /// (입력 컨트롤 위 클릭은 해당 컨트롤이 이벤트를 소비하므로 여기까지 오지 않는다)
+        /// </summary>
+        private void RootGrid_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            FocusSink.Focus(FocusState.Programmatic);
+        }
+
         #region 모니터링 / 카운트다운
 
         private void StartStopButton_Click(object sender, RoutedEventArgs e)
@@ -226,14 +284,14 @@ namespace CooldownReady
 
         private void StartMonitoring()
         {
-            var bindingsWithKey = _rows.Select(r => r.Binding).Where(b => b.TargetKeyCode != 0).ToList();
+            var bindingsWithKey = _rows.Select(r => r.Binding).Where(b => b.Enabled && b.TargetKeyCode != 0).ToList();
             if (bindingsWithKey.Count == 0)
             {
                 _ = ShowMessageDialogAsync("DialogErrorTitle", "MissingKeyMessage");
                 return;
             }
 
-            var validBindings = bindingsWithKey.Where(b => b.IntervalMinute > 0 || b.IntervalSecond > 0).ToList();
+            var validBindings = bindingsWithKey.Where(b => b.IntervalSecond > 0).ToList();
             if (validBindings.Count == 0)
             {
                 _ = ShowMessageDialogAsync("DialogErrorTitle", "MissingCooldownMessage");
@@ -261,10 +319,11 @@ namespace CooldownReady
             StartStopButton.Content = _localization.GetString("StartButton");
             StartStopButton.Background = new SolidColorBrush(Microsoft.UI.Colors.Green);
             _keyboardHook?.Stop();
+            StopRenderTicker();
 
             foreach (var runtime in _runtimes.Values)
             {
-                runtime.Dispose();
+                runtime.Stop();
             }
             _runtimes.Clear();
 
@@ -279,9 +338,12 @@ namespace CooldownReady
             if (!_isRunning)
                 return;
 
+            // 훅은 좌/우 구분 modifier 코드를 주므로 통합 코드로 정규화해 비교
+            int normalizedKeyCode = GlobalKeyboardHook.NormalizeKeyCode(vkCode);
+
             foreach (var runtime in _runtimes.Values)
             {
-                if (runtime.Binding.TargetKeyCode != vkCode)
+                if (!runtime.Binding.Enabled || runtime.Binding.TargetKeyCode != normalizedKeyCode)
                     continue;
 
                 if (runtime.Binding.PreventDuplicateInput && runtime.IsCountingDown)
@@ -289,80 +351,132 @@ namespace CooldownReady
 
                 runtime.StartCountdown();
             }
+
+            EnsureRenderTicker();
         }
 
         /// <summary>
-        /// 키 바인딩 하나의 카운트다운 상태(타이머·남은 시간·알림 재생)를 관리합니다.
+        /// 카운트다운 진행 중에만 매 렌더 프레임마다 모든 카운트다운을 갱신한다.
+        /// ms 표시 여부와 무관하게 모든 진행바가 동일한 프레임레이트로 부드럽게 채워진다.
         /// </summary>
-        private sealed class CooldownRuntime : IDisposable
+        private void EnsureRenderTicker()
+        {
+            if (!_renderTickerHooked)
+            {
+                CompositionTarget.Rendering += OnRenderTick;
+                _renderTickerHooked = true;
+            }
+        }
+
+        private void StopRenderTicker()
+        {
+            if (_renderTickerHooked)
+            {
+                CompositionTarget.Rendering -= OnRenderTick;
+                _renderTickerHooked = false;
+            }
+        }
+
+        private void OnRenderTick(object? sender, object e)
+        {
+            bool anyCounting = false;
+            foreach (var runtime in _runtimes.Values)
+            {
+                runtime.Tick();
+                anyCounting |= runtime.IsCountingDown;
+            }
+
+            if (!anyCounting)
+            {
+                StopRenderTicker();
+            }
+        }
+
+        /// <summary>
+        /// 키 바인딩 하나의 카운트다운 상태(남은 시간·알림 재생)를 관리합니다.
+        /// 갱신은 MainWindow의 렌더 프레임 티커가 Tick()을 호출해 일어납니다.
+        /// </summary>
+        private sealed class CooldownRuntime
         {
             public KeyBindingSettings Binding { get; }
 
             private readonly CountdownDisplay _display;
             private readonly Action<string> _playSound;
-            private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
+            private DateTime _endTimeUtc;
             private TimeSpan _remaining;
             private TimeSpan _interval;
             private int _alertSec;
             private bool _alertPlayed;
+            private bool _isCounting;
 
             public CooldownRuntime(KeyBindingSettings binding, CountdownDisplay display, Action<string> playSound)
             {
                 Binding = binding;
                 _display = display;
                 _playSound = playSound;
-                _timer.Tick += Timer_Tick;
             }
 
-            public bool IsCountingDown => _remaining.TotalSeconds > 0;
+            public bool IsCountingDown => _isCounting;
 
             public void StartCountdown()
             {
-                _timer.Stop();
-
-                _interval = TimeSpan.FromMinutes(Binding.IntervalMinute).Add(TimeSpan.FromSeconds(Binding.IntervalSecond));
+                _interval = TimeSpan.FromSeconds(Binding.IntervalSecond);
                 _alertSec = (int)Binding.AlertSecond;
                 _remaining = _interval;
+                _endTimeUtc = DateTime.UtcNow + _interval;
                 _alertPlayed = false;
+                _display.ShowMilliseconds = Binding.ShowMilliseconds;
+                _isCounting = _interval.TotalSeconds > 0;
+                UpdateDisplay(showProgress: _isCounting);
+            }
+
+            /// <summary>매 렌더 프레임마다 호출되어 남은 시간을 갱신합니다.</summary>
+            public void Tick()
+            {
+                if (!_isCounting)
+                    return;
+
+                _remaining = _endTimeUtc - DateTime.UtcNow;
+
+                if (_remaining <= TimeSpan.Zero)
+                {
+                    _isCounting = false;
+                    _remaining = TimeSpan.Zero;
+
+                    // 알림 시간이 0초면 종료 시점에 재생
+                    if (!_alertPlayed)
+                    {
+                        _playSound(Binding.SelectedSoundFile);
+                    }
+
+                    _alertPlayed = false;
+                    UpdateDisplay(showProgress: false); // 0초로 표시
+                    return;
+                }
+
                 UpdateDisplay(showProgress: true);
 
-                if (_interval.TotalSeconds > 0)
+                // 알림 시점에 사운드 재생
+                if (_remaining.TotalSeconds <= _alertSec && !_alertPlayed)
                 {
-                    _timer.Start();
+                    _playSound(Binding.SelectedSoundFile);
+                    _alertPlayed = true;
                 }
             }
 
-            private void Timer_Tick(object? sender, object e)
+            /// <summary>카운트다운을 멈추고 표시를 0초로 되돌립니다.</summary>
+            public void Stop()
             {
-                if (_remaining.TotalSeconds > 0)
-                {
-                    _remaining = _remaining.Subtract(TimeSpan.FromSeconds(1));
-                    UpdateDisplay(showProgress: true);
-
-                    // 알림 시점에 사운드 재생
-                    if (_remaining.TotalSeconds <= _alertSec && !_alertPlayed)
-                    {
-                        _playSound(Binding.SelectedSoundFile);
-                        _alertPlayed = true;
-                    }
-                }
-                else
-                {
-                    _timer.Stop();
-                    _remaining = TimeSpan.Zero;
-                    _alertPlayed = false;
-                    UpdateDisplay(showProgress: false); // 00:00으로 표시
-                }
+                _isCounting = false;
+                _remaining = TimeSpan.Zero;
+                _interval = TimeSpan.Zero;
+                _alertPlayed = false;
+                UpdateDisplay(showProgress: false);
             }
 
             private void UpdateDisplay(bool showProgress)
             {
                 _display.Update(_remaining, _interval, _alertSec, showProgress && _interval.TotalSeconds > 0);
-            }
-
-            public void Dispose()
-            {
-                _timer.Stop();
             }
         }
 

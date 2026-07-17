@@ -19,6 +19,21 @@ namespace CooldownReady
 
         public event Action<int>? KeyPressed;
 
+        /// <summary>
+        /// 저수준 훅은 좌/우 구분 코드(VK_LSHIFT 등)를 주고 XAML KeyDown은 통합 코드(VK_SHIFT 등)를 주므로,
+        /// modifier 키를 통합 코드로 정규화해 양쪽을 비교할 수 있게 합니다.
+        /// </summary>
+        public static int NormalizeKeyCode(int vkCode)
+        {
+            return vkCode switch
+            {
+                0xA0 or 0xA1 => 0x10, // VK_LSHIFT / VK_RSHIFT -> VK_SHIFT
+                0xA2 or 0xA3 => 0x11, // VK_LCONTROL / VK_RCONTROL -> VK_CONTROL
+                0xA4 or 0xA5 => 0x12, // VK_LMENU / VK_RMENU -> VK_MENU(Alt)
+                _ => vkCode
+            };
+        }
+
         public GlobalKeyboardHook()
         {
             _proc = HookCallback;

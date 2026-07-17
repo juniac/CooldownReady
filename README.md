@@ -10,11 +10,11 @@ Use it to track cooldowns for repeated actions by sound without continuously wat
 ### Main Features
 
 - Register multiple keys, each with its own countdown
-- Per-key settings: monitoring key, alert sound, cooldown time, alert time, repeat-press prevention
+- Per-key settings: enabled toggle, monitoring key, alert sound, cooldown time (seconds, up to 999), alert time, repeat-press prevention
 - Add key rows with the `＋ Add Key` button (the window grows per row and scrolls past a certain size)
 - Configure the alert timing before the timer ends
 - Use multiple alert sounds
-- Display remaining time and progress per key
+- Countdown rows use the full key label as a progress bar (remaining time in seconds, up to 999)
 - Keep the window always on top
 - Switch between Korean and English
 
@@ -26,7 +26,7 @@ Use it to track cooldowns for repeated actions by sound without continuously wat
 
 1. Run CooldownReady.
 2. Select the key input box in a key row and press the key to monitor.
-3. Configure the row: alert sound, cooldown time (min/sec), and alert time (sec).
+3. Configure the row: alert sound, cooldown time (sec), and alert time (sec). The checkbox at the front of each row toggles it on and off.
    - Example: cooldown `30` seconds, alert time `5` seconds.
    - The alert sound plays when the remaining time reaches `5` seconds.
 4. Press `＋ Add Key` to add more key rows if needed.

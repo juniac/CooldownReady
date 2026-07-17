@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace CooldownReady.Services
 {
@@ -7,13 +8,19 @@ namespace CooldownReady.Services
     /// </summary>
     public class KeyBindingSettings
     {
+        public bool Enabled { get; set; } = true;
         public int TargetKeyCode { get; set; }
         public string KeyName { get; set; } = "";
+
+        /// <summary>구버전(분 단위 입력) 마이그레이션 전용. 로드 시 IntervalSecond로 합산된다.</summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public double IntervalMinute { get; set; } = 0;
-        public double IntervalSecond { get; set; } = 30;
-        public double AlertSecond { get; set; } = 5;
+
+        public double IntervalSecond { get; set; } = 5;
+        public double AlertSecond { get; set; } = 1;
         public string SelectedSoundFile { get; set; } = "";
         public bool PreventDuplicateInput { get; set; }
+        public bool ShowMilliseconds { get; set; }
     }
 
     /// <summary>

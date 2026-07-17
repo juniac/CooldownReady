@@ -21,6 +21,12 @@ namespace CooldownReady.Controls
         public event Action<KeyBindingRow>? RemoveRequested;
         /// <summary>모니터링 키가 바뀌었을 때</summary>
         public event Action<KeyBindingRow>? KeyChanged;
+        /// <summary>사용 여부가 바뀌었을 때</summary>
+        public event Action<KeyBindingRow>? EnabledChanged;
+        /// <summary>ms 표시 여부가 바뀌었을 때</summary>
+        public event Action<KeyBindingRow>? ShowMillisecondsChanged;
+        /// <summary>쿨다운/알림 시간이 바뀌었을 때</summary>
+        public event Action<KeyBindingRow>? TimingChanged;
         /// <summary>사용자가 알림음을 바꿔 미리듣기가 필요할 때</summary>
         public event Action<string>? SoundPreviewRequested;
 
@@ -31,11 +37,15 @@ namespace CooldownReady.Controls
             InitializeComponent();
             Binding = binding;
 
+            // 엔터 입력 시 NumberBox 포커스를 거둬들일 대상
+            IsTabStop = true;
+
+            EnabledCheckBox.IsChecked = binding.Enabled;
             KeyBox.Text = binding.KeyName;
-            MinuteBox.Value = binding.IntervalMinute;
             SecondBox.Value = binding.IntervalSecond;
-            AlertBox.Value = binding.AlertSecond;
+            AlertBox.Value = Math.Min(binding.AlertSecond, binding.IntervalSecond);
             PreventCheckBox.IsChecked = binding.PreventDuplicateInput;
+            ShowMsCheckBox.IsChecked = binding.ShowMilliseconds;
 
             _isInitializing = false;
         }
@@ -43,11 +53,12 @@ namespace CooldownReady.Controls
         public void ApplyLocalization(LocalizationService localization)
         {
             KeyBox.PlaceholderText = localization.GetString("KeyPlaceholderShort");
-            MinuteUnitText.Text = localization.GetString("MinuteText");
             SecondUnitText.Text = localization.GetString("SecondText");
             AlertUnitText.Text = localization.GetString("AlertShortLabel");
             PreventCheckBox.Content = localization.GetString("PreventDuplicateInputLabel");
+            ShowMsCheckBox.Content = localization.GetString("ShowMillisecondsLabel");
             ToolTipService.SetToolTip(RemoveButton, localization.GetString("RemoveKeyToolTip"));
+            ToolTipService.SetToolTip(EnabledCheckBox, localization.GetString("EnabledToolTip"));
         }
 
         /// <summary>
@@ -96,12 +107,14 @@ namespace CooldownReady.Controls
             }
         }
 
-        private void KeyBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        private void KeyBox_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
         {
             e.Handled = true;
 
-            Binding.TargetKeyCode = (int)e.Key;
-            Binding.KeyName = GetKeyName(e.Key);
+            // modifier 키는 좌/우 구분 코드로 들어올 수 있으므로 통합 코드로 정규화
+            int keyCode = GlobalKeyboardHook.NormalizeKeyCode((int)e.Key);
+            Binding.TargetKeyCode = keyCode;
+            Binding.KeyName = GetKeyName((VirtualKey)keyCode);
             KeyBox.Text = Binding.KeyName;
             KeyChanged?.Invoke(this);
         }
@@ -118,19 +131,49 @@ namespace CooldownReady.Controls
             }
         }
 
-        private void MinuteBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        private void EnabledCheckBox_Toggled(object sender, RoutedEventArgs e)
         {
-            Binding.IntervalMinute = double.IsNaN(sender.Value) ? 0 : sender.Value;
+            Binding.Enabled = EnabledCheckBox.IsChecked ?? false;
+            if (!_isInitializing)
+            {
+                EnabledChanged?.Invoke(this);
+            }
         }
 
         private void SecondBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
         {
             Binding.IntervalSecond = double.IsNaN(sender.Value) ? 0 : sender.Value;
+
+            // 알림 시간은 쿨다운 시간을 넘을 수 없다
+            AlertBox.Maximum = Binding.IntervalSecond;
+            if (AlertBox.Value > Binding.IntervalSecond)
+            {
+                AlertBox.Value = Binding.IntervalSecond;
+            }
+
+            if (!_isInitializing)
+            {
+                TimingChanged?.Invoke(this);
+            }
         }
 
         private void AlertBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
         {
-            Binding.AlertSecond = double.IsNaN(sender.Value) ? 0 : sender.Value;
+            double value = double.IsNaN(sender.Value) ? 0 : sender.Value;
+
+            // 알림 시간은 쿨다운 시간을 넘을 수 없다
+            if (value > Binding.IntervalSecond)
+            {
+                sender.Value = Binding.IntervalSecond; // 값 보정 시 ValueChanged가 다시 호출된다
+                return;
+            }
+
+            Binding.AlertSecond = value;
+
+            if (!_isInitializing)
+            {
+                TimingChanged?.Invoke(this);
+            }
         }
 
         private void PreventCheckBox_Toggled(object sender, RoutedEventArgs e)
@@ -138,9 +181,27 @@ namespace CooldownReady.Controls
             Binding.PreventDuplicateInput = PreventCheckBox.IsChecked ?? false;
         }
 
+        private void ShowMsCheckBox_Toggled(object sender, RoutedEventArgs e)
+        {
+            Binding.ShowMilliseconds = ShowMsCheckBox.IsChecked ?? false;
+            if (!_isInitializing)
+            {
+                ShowMillisecondsChanged?.Invoke(this);
+            }
+        }
+
         private void RemoveButton_Click(object sender, RoutedEventArgs e)
         {
             RemoveRequested?.Invoke(this);
+        }
+
+        private void NumberBox_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            // 엔터로 값을 확정하면 입력 상자의 포커스를 해제한다
+            if (e.Key == VirtualKey.Enter)
+            {
+                Focus(FocusState.Programmatic);
+            }
         }
 
         internal static string GetKeyName(VirtualKey key)

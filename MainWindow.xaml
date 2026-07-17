@@ -14,12 +14,27 @@
     <MicaBackdrop />
   </Window.SystemBackdrop>
 
-  <Grid Margin="20">
+  <Grid x:Name="RootGrid"
+    Margin="20"
+    Background="Transparent"
+    PointerPressed="RootGrid_PointerPressed">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
+
+    <!-- 빈 영역 클릭 시 입력 상자 포커스를 옮겨받는 보이지 않는 대상 -->
+    <Button x:Name="FocusSink"
+      Width="1"
+      Height="1"
+      Padding="0"
+      Opacity="0"
+      IsTabStop="True"
+      TabIndex="9999"
+      IsHitTestVisible="False"
+      HorizontalAlignment="Left"
+      VerticalAlignment="Top" />
 
     <!-- 타이틀 및 설정 저장 버튼 (상단) -->
     <Grid VerticalAlignment="Top" Margin="0,0,0,10">

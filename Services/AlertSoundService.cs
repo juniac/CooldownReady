@@ -16,10 +16,9 @@ namespace CooldownReady.Services
     {
         private const string SoundsFolder = "Assets\\sounds";
 
-        private readonly MediaPlayer _mediaPlayer = new()
-        {
-            AudioCategory = MediaPlayerAudioCategory.Alerts
-        };
+        // 여러 키의 알림이 겹쳐도 서로 끊지 않도록 재생마다 별도 MediaPlayer를 사용한다
+        private readonly List<MediaPlayer> _activePlayers = new();
+        private readonly object _playersLock = new();
 
         /// <summary>
         /// 사용 가능한 mp3 파일명 목록을 이름순으로 반환합니다.
@@ -70,8 +69,20 @@ namespace CooldownReady.Services
                     source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/sounds/{fileName}"));
                 }
 
-                _mediaPlayer.Source = source;
-                _mediaPlayer.Play();
+                var player = new MediaPlayer
+                {
+                    AudioCategory = MediaPlayerAudioCategory.Alerts,
+                    Source = source
+                };
+                player.MediaEnded += (s, _) => ReleasePlayer(s);
+                player.MediaFailed += (s, _) => ReleasePlayer(s);
+
+                lock (_playersLock)
+                {
+                    _activePlayers.Add(player);
+                }
+
+                player.Play();
             }
             catch (Exception ex)
             {
@@ -79,9 +90,25 @@ namespace CooldownReady.Services
             }
         }
 
+        private void ReleasePlayer(MediaPlayer player)
+        {
+            lock (_playersLock)
+            {
+                _activePlayers.Remove(player);
+            }
+            player.Dispose();
+        }
+
         public void Dispose()
         {
-            _mediaPlayer.Dispose();
+            lock (_playersLock)
+            {
+                foreach (var player in _activePlayers)
+                {
+                    player.Dispose();
+                }
+                _activePlayers.Clear();
+            }
         }
     }
 }

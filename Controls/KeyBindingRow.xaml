@@ -13,25 +13,34 @@
     CornerRadius="5"
     Padding="10">
     <StackPanel Spacing="8">
-      <!-- 1줄: 키 입력 / 알림음 / 삭제 -->
+      <!-- 1줄: 사용 여부 / 키 입력 / 알림음 / 삭제 -->
       <Grid>
         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <TextBox x:Name="KeyBox"
+        <CheckBox x:Name="EnabledCheckBox"
           Grid.Column="0"
-          Width="130"
+          MinWidth="32"
+          Width="32"
+          VerticalAlignment="Center"
+          Checked="EnabledCheckBox_Toggled"
+          Unchecked="EnabledCheckBox_Toggled" />
+
+        <TextBox x:Name="KeyBox"
+          Grid.Column="1"
+          Width="110"
           IsReadOnly="True"
           MaxLength="50"
           FontSize="16"
           FontWeight="Bold"
-          KeyDown="KeyBox_KeyDown" />
+          PreviewKeyDown="KeyBox_PreviewKeyDown" />
 
         <ComboBox x:Name="SoundComboBox"
-          Grid.Column="1"
+          Grid.Column="2"
           Width="150"
           Margin="10,0,0,0"
           HorizontalAlignment="Left"
@@ -39,7 +48,7 @@
           SelectionChanged="SoundComboBox_SelectionChanged" />
 
         <Button x:Name="RemoveButton"
-          Grid.Column="2"
+          Grid.Column="3"
           Width="32"
           Height="32"
           Padding="0"
@@ -52,36 +61,38 @@
         </Button>
       </Grid>
 
-      <!-- 2줄: 쿨다운 시간(분/초) + 알림 시간 -->
+      <!-- 2줄: 쿨다운 시간(초) + 알림 시간(초) -->
       <StackPanel Orientation="Horizontal" Spacing="6">
-        <NumberBox x:Name="MinuteBox"
-          Width="80"
-          Minimum="0"
-          Maximum="59"
-          SpinButtonPlacementMode="Compact"
-          ValueChanged="MinuteBox_ValueChanged" />
-        <TextBlock x:Name="MinuteUnitText" VerticalAlignment="Center" />
         <NumberBox x:Name="SecondBox"
-          Width="80"
+          Width="100"
           Minimum="0"
-          Maximum="59"
+          Maximum="999"
           SpinButtonPlacementMode="Compact"
-          ValueChanged="SecondBox_ValueChanged" />
+          ValueChanged="SecondBox_ValueChanged"
+          KeyUp="NumberBox_KeyUp" />
         <TextBlock x:Name="SecondUnitText" VerticalAlignment="Center" />
         <NumberBox x:Name="AlertBox"
-          Width="80"
+          Width="100"
           Margin="10,0,0,0"
           Minimum="0"
           Maximum="300"
           SpinButtonPlacementMode="Compact"
-          ValueChanged="AlertBox_ValueChanged" />
+          ValueChanged="AlertBox_ValueChanged"
+          KeyUp="NumberBox_KeyUp" />
         <TextBlock x:Name="AlertUnitText" VerticalAlignment="Center" />
       </StackPanel>
 
-      <!-- 3줄: 재누름 방지 -->
-      <CheckBox x:Name="PreventCheckBox"
-        Checked="PreventCheckBox_Toggled"
-        Unchecked="PreventCheckBox_Toggled" />
+      <!-- 3줄: 재누름 방지 / ms 표시 -->
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <CheckBox x:Name="PreventCheckBox"
+          MinWidth="0"
+          Checked="PreventCheckBox_Toggled"
+          Unchecked="PreventCheckBox_Toggled" />
+        <CheckBox x:Name="ShowMsCheckBox"
+          MinWidth="0"
+          Checked="ShowMsCheckBox_Toggled"
+          Unchecked="ShowMsCheckBox_Toggled" />
+      </StackPanel>
     </StackPanel>
   </Border>
 </UserControl>
